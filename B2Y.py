@@ -1,9 +1,14 @@
 import subprocess
 import re
+import sys
 
-def get_aid_and_filename(url):
+def get_aid_and_filename(cmd_args):
+    # 构造命令行参数列表，首个元素为 "BBDown.exe"
+    cmd = ["BBDown.exe"]
+    cmd.extend(cmd_args)
+    
     # 运行BBDown.exe并捕获输出
-    result = subprocess.run(["BBDown.exe", url], capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True)
     
     # 提取AID和文件名
     aid_pattern = r"获取aid结束: (\d+)"
@@ -19,8 +24,13 @@ def get_aid_and_filename(url):
     else:
         return None, None
 
+# 获取命令行参数
+cmd_args = sys.argv[1:]
+
 # 使用示例
-url = "https://www.bilibili.com/video/BV1kj411a7w9/"
-aid, filename = get_aid_and_filename(url)
-print(f"AID: {aid}")
-print(f"文件名: {filename}")
+aid, filename = get_aid_and_filename(cmd_args)
+if aid and filename:
+    print(f"AID: {aid}")
+    print(f"文件名: {filename}")
+else:
+    print("无法获取AID或文件名。")
