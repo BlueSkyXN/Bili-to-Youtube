@@ -53,9 +53,12 @@ Youtube在某些受限地区（可能包括中国大陆、朝鲜、俄罗斯联�
 
 ## 哔哩哔哩 相关
 
+更多信息请访问 [哔哩哔哩下载相关信息](doc\bilibili-dl.md)
+
+
 ### 哔哩哔哩下载参考项目
 
-本列表中的项目可用性未知，也没有进行任何测试，请自行检查
+本列表中的项目可用性未知，可能也没有进行任何测试，请自行检查
 
 - https://github.com/ytdl-org/youtube-dl
 - https://github.com/nilaoda/BBDown
