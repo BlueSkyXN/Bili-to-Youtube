@@ -22,9 +22,8 @@ def get_aid_and_filename(cmd_args):
 
 def upload_video(filename, aid):
     upload_cmd = [
-        "python", "upload_video.py",
+        "python", "Upload_to_Youtube.py",
         "-f", filename,
-        "-s", "127.0.0.1:10808",
         "-d", f"转载自哔哩哔哩，原视频ID为{aid}"
     ]
     subprocess.run(upload_cmd)
