@@ -61,6 +61,7 @@ Youtube在某些受限地区（可能包括中国大陆、朝鲜、俄罗斯联�
 - https://github.com/nilaoda/BBDown
 - https://github.com/niuhuan/bili-cli-rs
 - https://github.com/develon2015/Youtube-dl-REST
+- https://github.com/yt-dlp/yt-dlp
 
 ### 哔哩哔哩下载分辨率问题
 
