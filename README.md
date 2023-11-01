@@ -21,6 +21,34 @@ B2Y，简化从哔哩哔哩视频下载到上传到Youtube的快速操作
 
 整体模块由哔哩哔哩下载和YouTube上传两部分组成
 
+如果需要使用其他哔哩哔哩下载或者ydl等其他来源或者已经准备好视频的，可直接调用Youtube上传单文件即可。
+
+## 上手流程
+
+1，准备符合条件的Google Youtube API
+
+2，准备认证信息的JSON，来自OAuth生成。
+
+3，准备Python运行环境。
+
+4，微调配置，如果有需求的话。
+
+5，准备好几个可执行文件，包括下载哔哩哔哩视频的BBDown和它需要的ffmpeg
+
+## 运行流程
+1，先完成上手流程
+
+2，如果Token失效，则删除运行目录的token文件，会重新通过OAuth认证打开浏览器进行认证和回调
+
+3，微调后（比如S5代理等）运行 B2Y.py，具体参数和BBDown一致
+
+```
+python B2Y.py  https://www.bilibili.com/video/BV1kj411a7w9/
+```
+```
+python B2Y.py  BV1kj411a7w9
+```
+
 ## Google Youtube API 的配置
 
 请阅读 [YoutubeAPI相关信息](doc\youtube-api.md)
