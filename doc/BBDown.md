@@ -29,8 +29,7 @@
 -intl, --use-intl-api   使用国际版(东南亚视频)解析模式（大陆站使用会返回“该地区无法访问”，应可能是给国际版用户用的）
 -e, --encoding-priority <encoding-priority>    视频编码的选择优先级, 用逗号分割 例: "hevc,av1,avc"
 -q, --dfn-priority <dfn-priority>              画质优先级,用逗号分隔 例: "8K 超高清, 1080P 高码率, HDR 真彩, 杜比视界"
-
-
+--work-dir <work-dir>                          设置程序的工作目录
 # 示例
 
 在我开发过程中，使用的版本是 https://github.com/nilaoda/BBDown/releases/download/1.6.1/BBDown_1.6.1_20230818_win-x64.zip
