@@ -8,7 +8,10 @@
 
 官方仓库访问 https://github.com/nilaoda/BBDown
 
+
 # 示例
+
+在我开发过程中，使用的版本是 https://github.com/nilaoda/BBDown/releases/download/1.6.1/BBDown_1.6.1_20230818_win-x64.zip
 
 ## 未安装ffmpeg
 

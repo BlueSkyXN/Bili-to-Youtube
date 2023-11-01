@@ -10,4 +10,11 @@
 
 Windows 用户从这里下载编译好的二进制包即可  https://www.gyan.dev/ffmpeg/builds/ 然后放入环境变量
 
+它包括发布包编译和月度编译版本
+
+- https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-2023-10-26-git-2b300eb533-full_build.7z
+- https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z
+
 我之前试过 https://github.com/BtbN/FFmpeg-Builds 但是当时不支持AV1硬件编码，不知道后来改了没
+
+本次测试使用了20231026版本，以及20230105版本
