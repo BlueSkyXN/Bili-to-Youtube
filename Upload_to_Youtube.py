@@ -1,59 +1,70 @@
 import socket
 import socks
 import os
+import argparse
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-import pickle  # 导入 pickle 模块
+import pickle
 
-def set_socks5_proxy():
-    socks.set_default_proxy(socks.SOCKS5, "127.0.0.1", 10808)
+def set_socks5_proxy(host, port):
+    socks.set_default_proxy(socks.SOCKS5, host, port)
     socket.socket = socks.socksocket
 
-def upload_video(file_path):
-    # 设置S5代理
-    set_socks5_proxy()
+def upload_video(args):
+    if args.socks5:
+        host, port = args.socks5.split(":")
+        set_socks5_proxy(host, int(port))
 
     creds = None
-    if os.path.exists('token.pickle'):  # 修改文件扩展名为 .pickle
-        # 如果token.pickle文件存在，尝试从中加载凭据
-        with open('token.pickle', 'rb') as token:  # 修改模式为 'rb'
-            creds = pickle.load(token)  # 使用 pickle.load 加载凭据
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
 
-    # 如果没有有效的凭据，执行OAuth 2.0授权流程
     if not creds or not creds.valid:
         flow = InstalledAppFlow.from_client_secrets_file(
             'client_secrets.json', 
             scopes=['https://www.googleapis.com/auth/youtube.upload']
         )
-        creds = flow.run_local_server(port=58080)  # 修改端口号
-        # 保存凭据以备后用
-        with open('token.pickle', 'wb') as token:  # 修改模式为 'wb' 和文件扩展名为 .pickle
-            pickle.dump(creds, token)  # 使用 pickle.dump 保存凭据
+        creds = flow.run_local_server(port=58080)
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(creds, token)
 
-    # 创建YouTube服务客户端
     youtube = build('youtube', 'v3', credentials=creds)
 
-    # 准备视频上传请求
+    title = args.title if args.title else os.path.splitext(os.path.basename(args.file))[0]
+    description = args.description if args.description else os.path.basename(args.file)
+    body_dict = {
+        'snippet': {
+            'description': description,
+            'title': title
+        },
+        'status': {
+            'privacyStatus': 'unlisted'
+        }
+    }
+    if args.categoryId:
+        body_dict['snippet']['categoryId'] = args.categoryId
+    if args.playlist:
+        body_dict['snippet']['playlistId'] = args.playlist
+    
     request = youtube.videos().insert(
         part='snippet,status',
-        body={
-            'snippet': {
-                'categoryId': '22',
-                'description': 'Test video upload',
-                'title': 'Test Video'
-            },
-            'status': {
-                'privacyStatus': 'unlisted'
-            }
-        },
-        media_body=MediaFileUpload(file_path)
+        body=body_dict,
+        media_body=MediaFileUpload(args.file)
     )
 
-    # 执行视频上传请求
     response = request.execute()
     print(response)
 
 if __name__ == '__main__':
-    upload_video('test.mp4')
+    parser = argparse.ArgumentParser(description='Upload a video to YouTube.')
+    parser.add_argument('-f', '--file', default='test.mp4', help='Path to the video file.')
+    parser.add_argument('-s', '--socks5', help='SOCKS5 proxy in format host:port.')
+    parser.add_argument('-t', '--title', help='Title of the uploaded video.')
+    parser.add_argument('-d', '--description', help='Description of the uploaded video.')
+    parser.add_argument('-g', '--categoryId', help='Category ID of the uploaded video.')
+    parser.add_argument('-l', '--playlist', help='Playlist ID for the uploaded video.')
+    args = parser.parse_args()
+    upload_video(args)
