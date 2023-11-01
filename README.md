@@ -23,6 +23,9 @@ B2Y，简化从哔哩哔哩视频下载到上传到Youtube的快速操作
 
 如果需要使用其他哔哩哔哩下载或者ydl等其他来源或者已经准备好视频的，可直接调用Youtube上传单文件即可。
 
+更多文档请访问 https://github.com/BlueSkyXN/Bili-to-Youtube/tree/main/doc/AI-Review 对每个文件的解读
+以及 https://github.com/BlueSkyXN/Bili-to-Youtube/tree/main/doc 中提到的包括BBDown和其他相关信息的文档
+
 ## 上手流程
 
 1，准备符合条件的Google Youtube API
