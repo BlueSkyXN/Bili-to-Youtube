@@ -41,7 +41,7 @@ def upload_video(args):
             'title': title
         },
         'status': {
-            'privacyStatus': 'unlisted'
+            'privacyStatus': 'private'
         }
     }
     if args.categoryId:
