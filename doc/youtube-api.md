@@ -14,6 +14,13 @@
 
 4，根据官方文档 https://support.google.com/youtube/answer/3070500?hl=zh-Hans 可找到 https://developers.google.com/youtube/v3/guides/uploading_a_video?hl=zh-cn ，在这里面的``向 Google 注册您的应用，以便它可以使用 OAuth 2.0 协议来授权访问用户数据。``就是API的入口。API的名字是 YouTube Data API。链接是 https://console.developers.google.com/apis/api/youtube.googleapis.com/overview
 
+# 认证
+
+2020 年 7 月 28 日 之后创建的未经验证的 API 项目通过 videos.insert 端点上传的所有视频将仅限于私人观看模式。要解除此限制，每个项目都必须 接受审核 以验证是否遵守 服务条款 。
+
+使用未经验证的 API 客户端上传视频的创作者将收到一封电子邮件，说明其视频被锁定为私有，并且他们可以通过使用官方或经过审核的客户端来避免限制。
+
+2020 年 7 月 28 日之前创建的 API 项目目前不受此更改的影响。不过，我们强烈建议所有开发者对其项目 完成合规性审核 ，以确保持续访问 YouTube API 服务。
 
 # 示例
 
