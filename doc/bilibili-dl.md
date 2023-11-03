@@ -25,6 +25,8 @@
 - https://github.com/develon2015/Youtube-dl-REST
 - https://github.com/yt-dlp/yt-dlp
 
+其他哔哩哔哩相关信息 https://github.com/HCLonely/awesome-bilibili-extra
+
 ## 哔哩哔哩下载分辨率问题
 
 由于哔哩哔哩本身的限制，哔哩哔哩下载出来的视频（未登录）是限制到了360P左右
