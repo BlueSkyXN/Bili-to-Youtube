@@ -10,18 +10,70 @@ import os
 import logging
 import random
 import shutil
-import send2trash  # 需要安装 send2trash 库：pip install send2trash
+import send2trash
+from datetime import datetime
+import argparse
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# 预设全局变量
-EXCEL_FILE_PATH = 'I:/bin/cache/bilibili_videos.xlsx' #下载完记得删除，如果中途失败直接重新运行即可不需要重新抓。目前不支持动态视频，只能是投稿的。
-DOWNLOAD_DIR = r"L:\BiliUP-Arch\Cache" #目标下载地址，和bbdown设置一致，注意修改，自行配置bbdown的cookie。
-CHECK_DOWNLOADED = True # 校验和硬跳过已下载
+# 预设全局变量，支持命令行覆盖
+EXCEL_FILE_PATH = 'I:/bin/cache/bilibili_videos.xlsx'
+DOWNLOAD_DIR = r"L:\BiliUP-Arch\Cache"
+CHECK_DOWNLOADED = True 
 USE_RANDOM_UA = True  # 是否启用随机UA功能
 CLEAN_SUBFOLDERS = True  # 是否清理子文件夹
 DOWNLOAD_SWITCH = True  # 新增的开关变量， True 表示下载， False 表示仅抓取信息
+START_DATE = ''  # 指定增量下载的开始日期，格式为 'YYYY-MM-DD'
+MID = '356010767'  # B站用户ID
+DELAY = 0.5  # 请求延迟时间
+MAX_PAGES = 100  # 最大抓取页数
+MAX_WORKERS = 2  # 多线程下载的最大线程数
+
+# 示例使用的Cookie
+cookie = '''ck'''
+
+# 解析命令行参数
+def parse_args():
+    parser = argparse.ArgumentParser(description="Bilibili 视频抓取与下载工具")
+    parser.add_argument('--excel_file_path', type=str, help='Excel 文件保存路径')
+    parser.add_argument('--download_dir', type=str, help='视频下载目录路径')
+    parser.add_argument('--check_downloaded', type=bool, help='是否检查已下载视频')
+    parser.add_argument('--use_random_ua', type=bool, help='是否启用随机 User-Agent')
+    parser.add_argument('--clean_subfolders', type=bool, help='是否清理下载目录中的子文件夹')
+    parser.add_argument('--download_switch', type=bool, help='是否进行视频下载')
+    parser.add_argument('--start_date', type=str, help='增量下载的开始日期，格式为 YYYY-MM-DD')
+    parser.add_argument('--mid', type=str, help='Bilibili 用户 ID')
+    parser.add_argument('--delay', type=float, help='请求之间的延迟时间')
+    parser.add_argument('--max_pages', type=int, help='最大抓取页数')
+    parser.add_argument('--max_workers', type=int, help='多线程下载的最大线程数')
+    return parser.parse_args()
+
+# 更新全局变量
+def update_globals_from_args(args):
+    global EXCEL_FILE_PATH, DOWNLOAD_DIR, CHECK_DOWNLOADED, USE_RANDOM_UA, CLEAN_SUBFOLDERS, DOWNLOAD_SWITCH, START_DATE, MID, DELAY, MAX_PAGES, MAX_WORKERS
+    if args.excel_file_path:
+        EXCEL_FILE_PATH = args.excel_file_path
+    if args.download_dir:
+        DOWNLOAD_DIR = args.download_dir
+    if args.check_downloaded is not None:
+        CHECK_DOWNLOADED = args.check_downloaded
+    if args.use_random_ua is not None:
+        USE_RANDOM_UA = args.use_random_ua
+    if args.clean_subfolders is not None:
+        CLEAN_SUBFOLDERS = args.clean_subfolders
+    if args.download_switch is not None:
+        DOWNLOAD_SWITCH = args.download_switch
+    if args.start_date:
+        START_DATE = args.start_date
+    if args.mid:
+        MID = args.mid
+    if args.delay is not None:
+        DELAY = args.delay
+    if args.max_pages is not None:
+        MAX_PAGES = args.max_pages
+    if args.max_workers is not None:
+        MAX_WORKERS = args.max_workers
 
 # 生成随机的 User-Agent
 def get_random_user_agent():
@@ -50,7 +102,7 @@ def get_wbi_keys():
         'Referer': 'https://www.bilibili.com/'
     }
     try:
-        resp = requests.get('https://api.biliapi.com/x/web-interface/nav', headers=headers, verify=False)
+        resp = requests.get('https://api.bilibili.com/x/web-interface/nav', headers=headers, verify=False)
         resp.raise_for_status()
         json_content = resp.json()
         img_url = json_content['data']['wbi_img']['img_url']
@@ -96,6 +148,16 @@ def fetch_bilibili_videos(mid, max_pages=10, start_page=1, cookie=None, delay=0.
     all_videos = []
     current_page = start_page  # 从指定页开始
     
+    # 设定增量下载的起始时间
+    if START_DATE:
+        try:
+            start_date_timestamp = int(datetime.strptime(START_DATE, '%Y-%m-%d').timestamp())
+        except ValueError:
+            logging.error("无效的日期格式，请使用 'YYYY-MM-DD' 格式。")
+            return []
+    else:
+        start_date_timestamp = 0  # 不限制起始日期
+    
     while current_page < start_page + max_pages:
         # 设置请求参数
         params = {
@@ -113,7 +175,7 @@ def fetch_bilibili_videos(mid, max_pages=10, start_page=1, cookie=None, delay=0.
         signed_params = enc_wbi(params, img_key, sub_key)
         
         # 构造完整的 URL
-        url = 'https://api.biliapi.net/x/space/wbi/arc/search?' + urllib.parse.urlencode(signed_params)
+        url = 'https://api.bilibili.com/x/space/wbi/arc/search?' + urllib.parse.urlencode(signed_params)
         
         # 设置请求头
         headers = {
@@ -141,21 +203,23 @@ def fetch_bilibili_videos(mid, max_pages=10, start_page=1, cookie=None, delay=0.
         # 提取视频信息
         vlist = result['data']['list']['vlist']
         for video in vlist:
-            video_info = {
-                'title': video['title'],
-                'description': video['description'],
-                'play': video['play'],
-                'comment': video['comment'],
-                'author': video['author'],
-                'created': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(video['created'])),
-                'length': video['length'],
-                'video_review': video['video_review'],
-                'bvid': video['bvid'],
-                'aid': video['aid'],
-                'pic': video['pic'],
-                'mid': video['mid']
-            }
-            all_videos.append(video_info)
+            # 如果指定了开始日期，则只保留发布时间在指定日期之后的视频
+            if start_date_timestamp == 0 or video['created'] >= start_date_timestamp:
+                video_info = {
+                    'title': video['title'],
+                    'description': video['description'],
+                    'play': video['play'],
+                    'comment': video['comment'],
+                    'author': video['author'],
+                    'created': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(video['created'])),
+                    'length': video['length'],
+                    'video_review': video['video_review'],
+                    'bvid': video['bvid'],
+                    'aid': video['aid'],
+                    'pic': video['pic'],
+                    'mid': video['mid']
+                }
+                all_videos.append(video_info)
         
         current_page += 1
         
@@ -182,9 +246,9 @@ def is_video_downloaded(bvid, download_dir):
 # 下载视频函数
 def download_video(bvid):
     ua = get_user_agent()
-    command = f'bbdown -ua "{ua}" {bvid}'
+    command = ['bbdown', '-ua', ua, bvid]
     try:
-        subprocess.run(command, shell=True, check=True)
+        subprocess.run(command, check=True)
     except subprocess.CalledProcessError as e:
         logging.error(f"视频下载失败: {bvid}, 错误: {e}")
 
@@ -198,12 +262,17 @@ def download_videos(bvid_list, download_dir, max_workers):
 def check_and_download_videos(mid, EXCEL_FILE_PATH, download_dir, cookie, max_workers):
     if not os.path.exists(EXCEL_FILE_PATH):
         logging.info(f"文件 {EXCEL_FILE_PATH} 不存在，开始获取数据...")
-        videos = fetch_bilibili_videos(mid, max_pages=100, cookie=cookie, delay=0.5)
+        videos = fetch_bilibili_videos(mid, max_pages=MAX_PAGES, cookie=cookie, delay=DELAY)
         save_to_excel(videos, EXCEL_FILE_PATH)
         logging.info(f"数据已保存到 {EXCEL_FILE_PATH}")
     
     # 读取保存的 Excel 文件并获取 bvid 列
     df = pd.read_excel(EXCEL_FILE_PATH)
+    
+    # 增加debug信息
+    logging.info(f"读取到的Excel数据: {df.head()}")
+    logging.info(f"Excel文件列名: {df.columns}")
+
     bvid_list = df['bvid'].tolist()
 
     # 初始化计数器
@@ -227,28 +296,26 @@ def check_and_download_videos(mid, EXCEL_FILE_PATH, download_dir, cookie, max_wo
     # 多线程下载未下载的视频
     download_videos(missing_bvids, download_dir, max_workers)
 
-# 示例使用
-mid = 'uid'
-cookie = '''ck'''
-#可从bbdown的ck缓存复制全部，可哔哩哔哩网页版ck复制，可iOS等手机app抓包复制。
+# 主程序入口
+if __name__ == "__main__":
+    args = parse_args()
+    update_globals_from_args(args)
 
-if CLEAN_SUBFOLDERS:
-    # 清理下载目录下的子文件夹
-    clean_subfolders(DOWNLOAD_DIR)
+    if CLEAN_SUBFOLDERS:
+        # 清理下载目录下的子文件夹
+        clean_subfolders(DOWNLOAD_DIR)
 
-if DOWNLOAD_SWITCH:
-    if CHECK_DOWNLOADED:
-        # 检查并下载未下载的视频
-        check_and_download_videos(mid, EXCEL_FILE_PATH, DOWNLOAD_DIR, cookie, max_workers=3)
+    if DOWNLOAD_SWITCH:
+        if CHECK_DOWNLOADED:
+            # 检查并下载未下载的视频
+            check_and_download_videos(MID, EXCEL_FILE_PATH, DOWNLOAD_DIR, cookie, max_workers=MAX_WORKERS)
+        else:
+            # 获取数据，从第一页开始，抓取 MAX_PAGES 页
+            videos = fetch_bilibili_videos(MID, max_pages=MAX_PAGES, cookie=cookie, delay=DELAY)
+            # 保存到 Excel 文件（覆盖）
+            save_to_excel(videos, EXCEL_FILE_PATH)
+            logging.info(f"数据已保存到 {EXCEL_FILE_PATH}")
+            check_and_download_videos(MID, EXCEL_FILE_PATH, DOWNLOAD_DIR, cookie, max_workers=MAX_WORKERS)
     else:
-        # 获取数据，从第一页开始，抓取100页
-        videos = fetch_bilibili_videos(mid, max_pages=100, cookie=cookie, delay=1)
-        # 保存到 Excel 文件（覆盖）
-        save_to_excel(videos, EXCEL_FILE_PATH)
-        logging.info(f"数据已保存到 {EXCEL_FILE_PATH}")
-else:
-    # 获取数据，从第一页开始，抓取100页
-    videos = fetch_bilibili_videos(mid, max_pages=100, cookie=cookie, delay=1)
-    # 保存到 Excel 文件（覆盖）
-    save_to_excel(videos, EXCEL_FILE_PATH)
-    logging.info(f"数据已保存到 {EXCEL_FILE_PATH}")
+        # 获取数据，从第一页开始，抓取 MAX_PAGES 页
+        videos = fetch_bilib
